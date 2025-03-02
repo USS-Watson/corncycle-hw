@@ -26,13 +26,33 @@ const int RIGHT_REVERSE = 10;
 
 #define ESPNOW_WIFI_CHANNEL 6
 
+const bool is_wii = false;
 const char car_id = '0';
+const char car_color = 'R';
+// const char car_id = '1';
+// const char car_color = 'B';
+// const char car_id = '2';
+// const char car_color = "G";
+// const char car_id = '3';
+// const char car_color = "Y";
+
+bool motors_unlocked = false;
+
 /* Classes */
 
 void run_motor(int number) {
+  // Early return if game hasn't started or player died
+  if (!motors_unlocked) {
+    return;
+  }
+
   int left_speed = 255;
   int right_speed = 255;
 
+  // Wii training wheels since nunchuck isn't granular
+  if (is_wii) {
+    number /= 2;
+  }
   // Turn left
   if (number < 0) {
     left_speed = left_speed - (abs(number));
@@ -99,6 +119,13 @@ public:
         number_received = number_received * -1;
       }
       run_motor(number_received);
+    } else if (data[0] == 'G') {
+      if (data[2] == car_color) {
+        motors_unlocked = false;
+      // Start
+      } else if (data[2] == 'S') {
+        motors_unlocked = true;
+      }
     }
   }
 };
