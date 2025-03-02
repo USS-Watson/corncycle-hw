@@ -141,13 +141,13 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
             // }
 
             // Support Wii Remote with joystick and Xbox controller left joystick
-            if (gp->axis_rx > 51 | gp->axis_rx < -51) {
-                // Print out just the x-axis value for Wii Remote joystick
-                logi("ESP,%d,%d\n", uni_hid_device_get_idx_for_instance(d), gp->axis_rx);
-            }
             if (gp->axis_x > 51 | gp->axis_x < -51) {
                 // Print out just the x-axis value for Xbox controller left joystick
                 logi("ESP,%d,%d\n", uni_hid_device_get_idx_for_instance(d), gp->axis_x);
+            }
+            else if (gp->axis_rx > 51 | gp->axis_rx < -51) {
+                // Print out just the x-axis value for Wii Remote joystick
+                logi("ESP,%d,%d\n", uni_hid_device_get_idx_for_instance(d), gp->axis_rx);
             }
 
             // Toggle Bluetooth connections
