@@ -27,12 +27,12 @@ const int RIGHT_REVERSE = 10;
 #define ESPNOW_WIFI_CHANNEL 6
 
 const bool is_wii = false;
-const char car_id = '0';
-const char car_color = 'R';
-// const char car_id = '1';
-// const char car_color = 'B';
+// const char car_id = '0';
+// const char car_color = 'R';
+const char car_id = '1';
+const char car_color = 'B';
 // const char car_id = '2';
-// const char car_color = "G";
+// const char car_color = 'G';
 // const char car_id = '3';
 // const char car_color = "Y";
 
@@ -43,6 +43,10 @@ bool motors_unlocked = false;
 void run_motor(int number) {
   // Early return if game hasn't started or player died
   if (!motors_unlocked) {
+    analogWrite(LEFT_REVERSE, 0);
+    analogWrite(LEFT_FORWARD, 0);
+    analogWrite(RIGHT_REVERSE, 0);
+    analogWrite(RIGHT_FORWARD, 0);
     return;
   }
 
@@ -199,5 +203,5 @@ void setup() {
 
 void loop() {
   delay(10);
-  //run_motor(received_packet);
+  // run_motor(received_packet);
 }
