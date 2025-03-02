@@ -122,4 +122,31 @@ void loop() {
       }
     }
   }
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    buf[i] = '\0';
+  }
+  index = 0;
+  // What is DRY?
+  while (Serial.available() > 0) {
+    char receivedChar = Serial.read();
+    if (receivedChar == '\n') {
+      if (!broadcast_peer.send_message((uint8_t *)buf, sizeof(buf))) {
+        Serial.println("Failed to broadcast message");
+      } else {
+        Serial.println(buf);
+      }
+    } else {
+      buf[index] = receivedChar;
+      index++;
+      if (index == BUFFER_SIZE) {
+        char newChar = '\0';
+        while(newChar != '\n') {
+          if(Serial.available() > 0) {
+            newChar = Serial.read();
+          }
+        }
+        index = 0;
+      }
+    }
+  }
 }
