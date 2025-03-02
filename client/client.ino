@@ -10,6 +10,13 @@
     using a callback function.
 */
 
+const int LEFT_FORWARD = 3;
+const int LEFT_REVERSE = 2;
+const int RIGHT_FORWARD= 11;
+const int RIGHT_REVERSE = 10;
+
+int received_packet = 0;
+
 #include "ESP32_NOW.h"
 #include "WiFi.h"
 
@@ -21,7 +28,40 @@
 
 #define ESPNOW_WIFI_CHANNEL 6
 
+const char car_id = '1';
 /* Classes */
+
+void run_motor(int number) {
+  int small_num = number;
+  int left_speed = 255;
+  int right_speed = 255;
+
+  // Turn left
+  if (number < 0) {
+    left_speed = left_speed - (abs(number));
+  } else { // Turn right
+    right_speed = right_speed - (abs(number));
+  }
+
+  // left_speed = 1;
+  // right_speed = 1;
+
+  analogWrite(LEFT_REVERSE, 0);
+  analogWrite(LEFT_FORWARD, 0);
+  analogWrite(RIGHT_REVERSE, 0);
+  analogWrite(RIGHT_FORWARD, 0);
+  if (left_speed < 0) {
+    analogWrite(LEFT_REVERSE, abs(left_speed) % 256);
+  } else {
+    analogWrite(LEFT_FORWARD, abs(left_speed) % 256);
+  }
+  if (right_speed < 0) {
+    analogWrite(RIGHT_REVERSE, abs(right_speed) % 256);
+  } else {
+    analogWrite(RIGHT_FORWARD, abs(right_speed) % 256);
+  }
+  Serial.printf("Left: %d, Right: %d \n", left_speed, right_speed);
+}
 
 // Creating a new class that inherits from the ESP_NOW_Peer class is required.
 
@@ -44,8 +84,21 @@ public:
 
   // Function to print the received messages from the master
   void onReceive(const uint8_t *data, size_t len, bool broadcast) {
-    Serial.printf("Received a message from master " MACSTR " (%s)\n", MAC2STR(addr()), broadcast ? "broadcast" : "unicast");
+
+     Serial.printf("Received a message from master " MACSTR " (%s)\n", MAC2STR(addr()), broadcast ? "broadcast" : "unicast");
     Serial.printf("  Message: %s\n", (char *)data);
+    delay(10);
+    if (data[0] == car_id || data[0] == '2' || data[0] == '3') {
+      int hundreds = data[3] - '0';
+      int tens = data[4] - '0';
+      int ones = data[5] - '0';
+      int number_received = hundreds * 100 + tens * 10 + ones * 1;
+      if (data[2] == '-') {
+        number_received = 0 - number_received;
+      }
+      received_packet = number_received;
+      run_motor(number_received);
+    }
   }
 };
 
@@ -80,6 +133,10 @@ void register_new_master(const esp_now_recv_info_t *info, const uint8_t *data, i
 
 void setup() {
   Serial.begin(115200);
+  pinMode(LEFT_FORWARD, OUTPUT);
+  pinMode(LEFT_REVERSE, OUTPUT);
+  pinMode(RIGHT_FORWARD, OUTPUT);
+  pinMode(RIGHT_REVERSE, OUTPUT);
 
   // Initialize the Wi-Fi module
   WiFi.mode(WIFI_STA);
@@ -110,4 +167,6 @@ void setup() {
 
 void loop() {
   delay(1000);
+  //run_motor(received_packet);
+  //received_packet = 0;
 }
