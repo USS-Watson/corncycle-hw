@@ -64,7 +64,7 @@ static void my_platform_on_init_complete(void) {
 
     //    uni_bt_service_set_enabled(true);
 
-    uni_property_dump_all();
+    // uni_property_dump_all();
 }
 
 static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi) {
@@ -111,7 +111,7 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
     prev = *ctl;
     // Print device Id before dumping gamepad.
     // logi("(%p) id=%d ", d, uni_hid_device_get_idx_for_instance(d));
-    uni_controller_dump(ctl);
+    // uni_controller_dump(ctl);
 
     switch (ctl->klass) {
         case UNI_CONTROLLER_CLASS_GAMEPAD:
@@ -119,25 +119,35 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
 
             // Debugging
             // Axis ry: control rumble
-            if ((gp->buttons & BUTTON_A) && d->report_parser.play_dual_rumble != NULL) {
-                d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
-                                                  128 /* weak magnitude */, 0 /* strong magnitude */);
-            }
+            // if ((gp->buttons & BUTTON_A) && d->report_parser.play_dual_rumble != NULL) {
+            //     d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
+            //                                       128 /* weak magnitude */, 0 /* strong magnitude */);
+            // }
 
-            if ((gp->buttons & BUTTON_B) && d->report_parser.play_dual_rumble != NULL) {
-                d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
-                                                  0 /* weak magnitude */, 128 /* strong magnitude */);
-            }
-            // Buttons: Control LEDs On/Off
-            if ((gp->buttons & BUTTON_X) && d->report_parser.set_player_leds != NULL) {
-                d->report_parser.set_player_leds(d, leds++ & 0x0f);
-            }
+            // if ((gp->buttons & BUTTON_B) && d->report_parser.play_dual_rumble != NULL) {
+            //     d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
+            //                                       0 /* weak magnitude */, 128 /* strong magnitude */);
+            // }
+            // // Buttons: Control LEDs On/Off
+            // if ((gp->buttons & BUTTON_X) && d->report_parser.set_player_leds != NULL) {
+            //     d->report_parser.set_player_leds(d, leds++ & 0x0f);
+            // }
             // Axis: control RGB color
-            if ((gp->buttons & BUTTON_Y) && d->report_parser.set_lightbar_color != NULL) {
-                uint8_t r = (gp->axis_x * 256) / 512;
-                uint8_t g = (gp->axis_y * 256) / 512;
-                uint8_t b = (gp->axis_rx * 256) / 512;
-                d->report_parser.set_lightbar_color(d, r, g, b);
+            // if (d->report_parser.set_lightbar_color != NULL) {
+            //     uint8_t r = (gp->axis_x * 256) / 512;
+            //     uint8_t g = (gp->axis_y * 256) / 512;
+            //     uint8_t b = (gp->axis_rx * 256) / 512;
+            //     d->report_parser.set_lightbar_color(d, r, g, b);
+            // }
+
+            // Support Wii Remote with joystick and Xbox controller left joystick
+            if (gp->axis_rx > 51 | gp->axis_rx < -51) {
+                // Print out just the x-axis value for Wii Remote joystick
+                logi("ESP,%d,%d\n", uni_hid_device_get_idx_for_instance(d), gp->axis_rx);
+            }
+            if (gp->axis_x > 51 | gp->axis_x < -51) {
+                // Print out just the x-axis value for Xbox controller left joystick
+                logi("ESP,%d,%d\n", uni_hid_device_get_idx_for_instance(d), gp->axis_x);
             }
 
             // Toggle Bluetooth connections
