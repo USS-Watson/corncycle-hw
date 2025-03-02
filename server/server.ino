@@ -54,8 +54,7 @@ public:
 };
 
 /* Global Variables */
-
-uint32_t msg_count = 0;
+const int BUFFER_SIZE = 12;
 
 // Create a broadcast peer object
 ESP_NOW_Broadcast_Peer broadcast_peer(ESPNOW_WIFI_CHANNEL, WIFI_IF_STA, NULL);
@@ -64,6 +63,7 @@ ESP_NOW_Broadcast_Peer broadcast_peer(ESPNOW_WIFI_CHANNEL, WIFI_IF_STA, NULL);
 
 void setup() {
   Serial.begin(115200);
+  Serial1.begin(115200);
 
   // Initialize the Wi-Fi module
   WiFi.mode(WIFI_STA);
@@ -90,15 +90,36 @@ void setup() {
 }
 
 void loop() {
-  // Broadcast a message to all devices within the network
-  char data[32];
-  snprintf(data, sizeof(data), "Hello, World! #%lu", msg_count++);
 
-  Serial.printf("Broadcasting message: %s\n", data);
-
-  if (!broadcast_peer.send_message((uint8_t *)data, sizeof(data))) {
-    Serial.println("Failed to broadcast message");
+  char buf[BUFFER_SIZE];
+  for (int i = 0; i < BUFFER_SIZE; i++) {
+    buf[i] = '\0';
   }
-
-  delay(5000);
+  int index = 0;
+  while (Serial1.available() > 0) {
+    char receivedChar = Serial1.read();
+    if (receivedChar == '\n') {
+      // Serial.println(buf);  // Print the received message in the Serial monitor
+      // If our magic ESP Serial message
+      if (buf[0] == 'E' && buf[1] == 'S' && buf[2] == 'P') {
+        if (!broadcast_peer.send_message((uint8_t *)&buf[4], sizeof(buf))) {
+          Serial.println("Failed to broadcast message");
+        } else {
+          Serial.println(&buf[4]);
+        }
+      }
+    } else {
+      buf[index] = receivedChar;
+      index++;
+      if (index == BUFFER_SIZE) {
+        char newChar = '\0';
+        while(newChar != '\n') {
+          if(Serial1.available() > 0) {
+            newChar = Serial1.read();
+          }
+        }
+        index = 0;
+      }
+    }
+  }
 }
