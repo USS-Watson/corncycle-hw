@@ -15,8 +15,6 @@ const int LEFT_REVERSE = 2;
 const int RIGHT_FORWARD= 11;
 const int RIGHT_REVERSE = 10;
 
-int received_packet = 0;
-
 #include "ESP32_NOW.h"
 #include "WiFi.h"
 
@@ -28,39 +26,43 @@ int received_packet = 0;
 
 #define ESPNOW_WIFI_CHANNEL 6
 
-const char car_id = '1';
+const char car_id = '0';
 /* Classes */
 
 void run_motor(int number) {
-  int small_num = number;
   int left_speed = 255;
   int right_speed = 255;
 
   // Turn left
   if (number < 0) {
     left_speed = left_speed - (abs(number));
-  } else { // Turn right
+  }
+  // Turn right 
+  else { 
     right_speed = right_speed - (abs(number));
   }
 
-  // left_speed = 1;
-  // right_speed = 1;
-
+  // Reset reverse and forward before setting new values
   analogWrite(LEFT_REVERSE, 0);
   analogWrite(LEFT_FORWARD, 0);
   analogWrite(RIGHT_REVERSE, 0);
   analogWrite(RIGHT_FORWARD, 0);
+
+  // Add clamps in case of bad number input
   if (left_speed < 0) {
-    analogWrite(LEFT_REVERSE, abs(left_speed) % 256);
-  } else {
-    analogWrite(LEFT_FORWARD, abs(left_speed) % 256);
+    analogWrite(LEFT_REVERSE, (left_speed * -1) % 256);
+  } 
+  else {
+    analogWrite(LEFT_FORWARD, left_speed % 256);
   }
+  
   if (right_speed < 0) {
-    analogWrite(RIGHT_REVERSE, abs(right_speed) % 256);
-  } else {
-    analogWrite(RIGHT_FORWARD, abs(right_speed) % 256);
+    analogWrite(RIGHT_REVERSE, (right_speed * -1) % 256);
+  } 
+  else {
+    analogWrite(RIGHT_FORWARD, right_speed % 256);
   }
-  Serial.printf("Left: %d, Right: %d \n", left_speed, right_speed);
+  // Serial.printf("Left: %d, Right: %d \n", left_speed, right_speed);
 }
 
 // Creating a new class that inherits from the ESP_NOW_Peer class is required.
@@ -85,18 +87,17 @@ public:
   // Function to print the received messages from the master
   void onReceive(const uint8_t *data, size_t len, bool broadcast) {
 
-     Serial.printf("Received a message from master " MACSTR " (%s)\n", MAC2STR(addr()), broadcast ? "broadcast" : "unicast");
+    Serial.printf("Received a message from master " MACSTR " (%s)\n", MAC2STR(addr()), broadcast ? "broadcast" : "unicast");
     Serial.printf("  Message: %s\n", (char *)data);
-    delay(10);
-    if (data[0] == car_id || data[0] == '2' || data[0] == '3') {
+    // delay(10);
+    if (data[0] == car_id) {
       int hundreds = data[3] - '0';
       int tens = data[4] - '0';
       int ones = data[5] - '0';
       int number_received = hundreds * 100 + tens * 10 + ones * 1;
       if (data[2] == '-') {
-        number_received = 0 - number_received;
+        number_received = number_received * -1;
       }
-      received_packet = number_received;
       run_motor(number_received);
     }
   }
@@ -142,7 +143,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.setChannel(ESPNOW_WIFI_CHANNEL);
   while (!WiFi.STA.started()) {
-    delay(100);
+    delay(10);
   }
 
   Serial.println("ESP-NOW Example - Broadcast Slave");
@@ -163,10 +164,13 @@ void setup() {
   ESP_NOW.onNewPeer(register_new_master, NULL);
 
   Serial.println("Setup complete. Waiting for a master to broadcast a message...");
+  pinMode(23, OUTPUT);
+  digitalWrite(23, HIGH);
+  delay(5000);
+  digitalWrite(23, LOW);
 }
 
 void loop() {
-  delay(1000);
+  delay(10);
   //run_motor(received_packet);
-  //received_packet = 0;
 }
