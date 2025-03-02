@@ -26,7 +26,7 @@ const int RIGHT_REVERSE = 10;
 
 #define ESPNOW_WIFI_CHANNEL 6
 
-const char car_id = '0';
+const char car_id = '2';
 /* Classes */
 
 void run_motor(int number) {
@@ -35,11 +35,11 @@ void run_motor(int number) {
 
   // Turn left
   if (number < 0) {
-    left_speed = left_speed - (abs(number));
+    left_speed = left_speed - (abs(number / 2));
   }
   // Turn right 
   else { 
-    right_speed = right_speed - (abs(number));
+    right_speed = right_speed - (abs(number / 2));
   }
 
   // Reset reverse and forward before setting new values
